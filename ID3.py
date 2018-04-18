@@ -26,6 +26,7 @@ def ID3(examples, default):
       for ex in examples:
         if (best in ex):
           if (ex[best] == v):
+            #deletes attributes from example so they don't get split on again
             del ex[best]
             newExamples.append(ex)
       #Add value node to root node, recursing to continue the tree
@@ -124,10 +125,7 @@ def choose_attribute(examples):
 
 
 def prune(node, examples):
-  '''
-  Takes in a trained tree and a validation set of examples.  Prunes nodes in order
-  to improve accuracy on the validation data; the precise pruning strategy is up to you.
-  '''
+  
 
 #Classifies a series of nodes and gets accuracy of tree
 def test(node, examples):
