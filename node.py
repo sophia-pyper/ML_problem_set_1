@@ -27,3 +27,15 @@ class Node:
 
   def erasechild(self,node):
  		del self.children[node]
+
+  def copyAttributes(self, aList):
+    self.attribute = aList[0]
+    self.children = aList[1]
+    self.isClass = aList[2]
+    self.defaultChild = aList[3]
+
+  def exportAttributes(self):
+    return [self.attribute, self.children, self.isClass, self.defaultChild]
+
+    
+

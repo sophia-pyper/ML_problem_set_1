@@ -137,65 +137,33 @@ def choose_attribute(examples):
 
 #Returns pruned tree based on accuracy stats from validation set (examples)
 def prune(node, examples):
-  benchmark = test(node, examples)
-  visited = [] #list of already visited nodes
-  done = False
-  currNode = node
-  ptree = None
-  while(not done):
-    if(currNode.parent == "ROOT"):
-      done = True
-    elif(check_children_for_classes(currNode)):
-      temp = prune_test(node, currNode, examples, benchmark)
-      ptree = temp[0]
-      benchmark = temp[1]
-      currNode = currNode.parent
-    else:
-      for c in currNode.children:
-        if(c not in visited and not c.isClass):
-          currNode = c
-          break
-      #all children have been tested but parent is not root; test parent
-      temp = prune_test(node, currNode, examples, benchmark)
-      ptree = temp[0]
-      benchmark = temp[1]
-      currNode = currNode.parent
-
-  return ptree
-
-#Tests whether the given node in the tree should be pruned given the validation set
-def prune_test(root, node, vset, benchmark):
-  newNode = node
-  bm = benchmark
-
-  #substitute each of the's children in place of the node in the tree and run test
-  for c in newNode.children:
-    #par is the running node's parent
-    par = newNode.parent
-    c.addparent(par) #child's parent is now the parent's parent
-    #add in child as child of node's parent, and remove node as child
-    #value for child being added is identical to value for parent node being removed
-    par.addchild(c,par.children[newNode])
-    par.erasechild(newNode)
-    result = test(root, vset)
-    if(result >= bm):
-      newNode = c
-      bm = result
-    else: #revert changes to tree for retesting
-      par.addchild(newNode,par.children[c])
-      c.addparent(newNode)
-      par.erasechild(c)
-  
-  #return the root of the modified tree and the new benchmark
-  return [root, bm]
-
-
-#Checks whether all children of the node are classes
-def check_children_for_classes(node):
+  #If child is not the bottom-most attribute above leaves, keep going down
   for c in node.children:
-    if(not c.isClass):
-      return False
-  return True
+    if (not c.isClass):
+      c = prune(c, examples)
+  #Find root to establish baseline
+  root = node
+  while (root.parent != "ROOT"):
+    root = root.parent
+  baseline = test(root, examples)
+  #For each child, copy info to parent and retest accuracy
+  for child in node.children:
+    savedNodeInfo = node.exportAttributes()
+    childInfo = child.exportAttributes()
+    node.copyAttributes(childInfo)
+    newAccuracy = test(root, examples)
+    #If accuracy doesn't improve, revert node to previous info
+    if (newAccuracy <= baseline):
+      node.copyAttributes(savedNodeInfo)
+    #Otherwise, leave child in the place of old parent
+    else:
+      baseline = newAccuracy
+  return node
+
+
+
+
+
 #Classifies a series of nodes and gets accuracy of tree
 def test(node, examples):
   total = len(examples)
