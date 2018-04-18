@@ -4,14 +4,13 @@ import math
 def ID3(examples, default):
   #If no examples, return default option
   if (len(examples) <= 0):
-    print "Leaf found of value ", default
     return Node(default, True)
   #Check whether non-trivial splits are available
   no_split = sameCheck(examples)
   #If not, return node with the default option
   if (no_split):
-    print "Leaf found of value ", default
-    return Node(no_split, True)
+    nodeVal = mode(examples)
+    return Node(nodeVal, True)
   else:
     best = choose_attribute(examples)
     dTree = Node(best, False)
@@ -25,24 +24,23 @@ def ID3(examples, default):
       newExamples = []
       #Go through all the examples whose attribute is equal to the given value
       for ex in examples:
-        if (ex[best] == v):
-          del ex[best]
-          newExamples.append(ex)
+        if (best in ex):
+          if (ex[best] == v):
+            del ex[best]
+            newExamples.append(ex)
       #Add value node to root node, recursing to continue the tree
-      print "Adding new branch to tree with value ", v, " for attribute ", best
       newTree = ID3(newExamples, mode(newExamples))
       newTree.addparent(dTree)
       dTree.addchild(newTree, v)
-      print "Returning tree beneath ", best
     return dTree
 
 
 
-#Returns false if non-trivial splits exist, and the most common attribute otherwise
+#Returns True if no non-trivial splits exist, and False otherwise
 def sameCheck(examples):
   #First, check if the list is only one item long
   if (len(examples) == 1):
-    return examples[0]["Class"]
+    return True
   #Otherwise, proceed to check for non-trivial splits
   classCheck = False
   attCheck = False
@@ -62,7 +60,7 @@ def sameCheck(examples):
     return False
   #otherwise, return most common class
   else:
-    return mode(examples)
+    return True
 
 #Takes in a list as input and returns the item that appears most on the list
 def mode(examples):
@@ -146,16 +144,14 @@ def test(node, examples):
 #Evaluates classifications of an individual node
 def evaluate(node, example):
   #If node is a leaf, return value
-  print "Starting at node ", node.attribute
   if (node.isClass):
     return node.attribute
   else:
     #Otherwise, find value of example for node's attribute
     exValue = example[node.attribute]
     #Recurse with the child node who is assigned that value
-    for child, value in node.children.itervalues():
-      if (exValue == value):
-        print "Continuing to node with value ", value
+    for child in node.children:
+      if (exValue == node.children[child]):
         result = evaluate(child, example)
         return result
     #If it makes it here, no node had that attribute value

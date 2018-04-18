@@ -16,8 +16,8 @@ class Node:
   def addparent(self,node):
   	self.parent = node
 
-  def addchild(self,node):
-  	self.children.append(node)
+  def addchild(self,node, val):
+  	self.children[node] = val
 
   def eraseparent(self):
   	self.parent = None
