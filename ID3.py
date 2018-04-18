@@ -143,21 +143,23 @@ def prune(node, examples):
   currNode = node
   ptree = None
   while(not done):
-    if(check_children_for_classes(currNode)):
+    if(currNode.parent == "ROOT"):
+      done = True
+    elif(check_children_for_classes(currNode)):
       temp = prune_test(node, currNode, examples, benchmark)
       ptree = temp[0]
       benchmark = temp[1]
+      currNode = currNode.parent
     else:
       for c in currNode.children:
         if(c not in visited and not c.isClass):
           currNode = c
           break
-      if(currNode.parent=="ROOT"):
-        done = True #root node reached, so no more pruning left to do
-      else: #all children have been tested but parent is not root; test parent
-        temp = prune_test(node, currNode, examples, benchmark)
-        ptree = temp[0]
-        benchmark = temp[1]
+      #all children have been tested but parent is not root; test parent
+      temp = prune_test(node, currNode, examples, benchmark)
+      ptree = temp[0]
+      benchmark = temp[1]
+      currNode = currNode.parent
 
   return ptree
 
@@ -168,19 +170,21 @@ def prune_test(root, node, vset, benchmark):
 
   #substitute each of the's children in place of the node in the tree and run test
   for c in newNode.children:
-    c.addparent(newNode.parent) #child's parent is now the parent's parent
-      #add in child as child of node's parent, and remove node as child
-      #value for child being added is identical to value for parent node being removed
-      newNode.parent.addchild(c,newNode.parent.children[newNode])
-      newNode.parent.erasechild(newNode)
-      result = test(root, vset)
-      if(result >= bm):
-        newNode = c
-        bm = result
-      else: #revert changes to tree for retesting
-        newNode.parent.addchild(newNode,newNode.parent.children[c])
-        c.addparent(newNode)
-        newNode.parent.erasechild(c)
+    #par is the running node's parent
+    par = newNode.parent
+    c.addparent(par) #child's parent is now the parent's parent
+    #add in child as child of node's parent, and remove node as child
+    #value for child being added is identical to value for parent node being removed
+    par.addchild(c,par.children[newNode])
+    par.erasechild(newNode)
+    result = test(root, vset)
+    if(result >= bm):
+      newNode = c
+      bm = result
+    else: #revert changes to tree for retesting
+      par.addchild(newNode,par.children[c])
+      c.addparent(newNode)
+      par.erasechild(c)
   
   #return the root of the modified tree and the new benchmark
   return [root, bm]

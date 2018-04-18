@@ -25,5 +25,5 @@ class Node:
   def eraseparent(self):
   	self.parent = None
 
- 	def erasechild(self,node):
- 		self.children.remove(node)
+  def erasechild(self,node):
+ 		del self.children[node]
