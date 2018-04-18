@@ -13,6 +13,9 @@ class Node:
     #If false, node is attribute. If true, node is class and "attribute" label denotes which class
     self.isClass = isClass
 
+    #Sets a default child value based on the mode. Used for classifying examples with values the tree has not seen
+    self.defaultChild = 0
+
   def addparent(self,node):
   	self.parent = node
 
