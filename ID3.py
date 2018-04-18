@@ -4,23 +4,38 @@ import math
 def ID3(examples, default):
   #If no examples, return default option
   if (len(examples) <= 0):
+    print "Leaf found of value ", default
     return Node(default, True)
+  #Check whether non-trivial splits are available
   no_split = sameCheck(examples)
+  #If not, return node with the default option
   if (no_split):
+    print "Leaf found of value ", default
     return Node(no_split, True)
   else:
     best = choose_attribute(examples)
     dTree = Node(best, False)
     bestValues = []
+    #Find all values of attribute
     for e in examples:
       if (e[best] not in bestValues):
         bestValues.append(e[best])
+    #Iterate through values 
     for v in bestValues:
       newExamples = []
+      #Go through all the examples whose attribute is equal to the given value
       for ex in examples:
         if (ex[best] == v):
+          del ex[best]
           newExamples.append(ex)
-      
+      #Add value node to root node, recursing to continue the tree
+      print "Adding new branch to tree with value ", v, " for attribute ", best
+      newTree = ID3(newExamples, mode(newExamples))
+      newTree.addparent(dTree)
+      dTree.addchild(newTree, v)
+      print "Returning tree beneath ", best
+    return dTree
+
 
 
 #Returns false if non-trivial splits exist, and the most common attribute otherwise
@@ -32,10 +47,8 @@ def sameCheck(examples):
   classCheck = False
   attCheck = False
   exCompare = examples[0]
-  classList = []
   #Iterate through examples
   for ex in examples:
-    classList.append(ex["Class"])
     #If any classes differ, we know not all classes are same
     if (ex["Class"] != exCompare["Class"]):
       classCheck = True
@@ -49,18 +62,18 @@ def sameCheck(examples):
     return False
   #otherwise, return most common class
   else:
-    return mode(classList)
+    return mode(examples)
 
 #Takes in a list as input and returns the item that appears most on the list
-def mode(mList):
+def mode(examples):
   itemCounter = {}
   maxMode = 0
   maxItem = 0
-  for i in mList:
-    if (i not in itemCounter):
-      itemCounter[i] = 1
+  for i in examples:
+    if (i["Class"] not in itemCounter):
+      itemCounter[i["Class"]] = 1
     else:
-      itemCounter[i] += 1
+      itemCounter[i["Class"]] += 1
   for item in itemCounter:
     if (itemCounter[item] > maxMode):
       maxItem = item
@@ -105,6 +118,7 @@ def choose_attribute(examples):
           p = (float(c)/float(totalCount))
           branchEntropy -= p*math.log(p,2)
         entropySum -= branchEntropy
+      #If entropy is better (less negative) than previous entropy, set it as the new max
       if (entropySum > maxEntropy):
         maxEntropy = entropySum
         att_to_split = att     
@@ -117,15 +131,36 @@ def prune(node, examples):
   to improve accuracy on the validation data; the precise pruning strategy is up to you.
   '''
 
+#Classifies a series of nodes and gets accuracy of tree
 def test(node, examples):
-  '''
-  Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
-  of examples the tree classifies correctly).
-  '''
+  total = len(examples)
+  correctCount = 0
+  #For each example, evaluate and see whether tree classifies correctly. 
+  for e in examples:
+    guessClass = evaluate(e, node)
+    if (guessClass == e['Class']):
+      correctCount += 1
+  return (float(correctCount)/float(total))
 
 
+#Evaluates classifications of an individual node
 def evaluate(node, example):
-  '''
-  Takes in a tree and one example.  Returns the Class value that the tree
-  assigns to the example.
-  '''
+  #If node is a leaf, return value
+  print "Starting at node ", node.attribute
+  if (node.isClass):
+    return node.attribute
+  else:
+    #Otherwise, find value of example for node's attribute
+    exValue = example[node.attribute]
+    #Recurse with the child node who is assigned that value
+    for child, value in node.children.itervalues():
+      if (exValue == value):
+        print "Continuing to node with value ", value
+        result = evaluate(child, example)
+        return result
+    #If it makes it here, no node had that attribute value
+    print "No matching value found"
+    return
+
+
+
